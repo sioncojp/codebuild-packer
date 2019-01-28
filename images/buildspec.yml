@@ -1,0 +1,23 @@
+# ref: https://aws.amazon.com/jp/blogs/news/how-to-create-an-ami-builder-with-aws-codebuild-and-hashicorp-packer/
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "HashiCorp Packer をインストール中..."
+      - curl -qL -o packer.zip https://releases.hashicorp.com/packer/0.12.3/packer_0.12.3_linux_amd64.zip && unzip packer.zip && chmod +x ./packer
+      - echo "jq をインストール中..."
+      - curl -qL -o jq https://stedolan.github.io/jq/download/linux64/jq && chmod +x ./jq
+  build:
+    commands:
+      - echo "AWS credentials を設定"
+      - curl -qL -o aws_credentials.json http://169.254.170.2/$AWS_CONTAINER_CREDENTIALS_RELATIVE_URI > aws_credentials.json
+      - aws configure set region $AWS_REGION
+      - aws configure set aws_access_key_id `./jq -r '.AccessKeyId' aws_credentials.json`
+      - aws configure set aws_secret_access_key `./jq -r '.SecretAccessKey' aws_credentials.json`
+      - aws configure set aws_session_token `./jq -r '.Token' aws_credentials.json`
+      - echo "Packer ビルド開始"
+      - ./packer build ${IMAGE}
+  post_build:
+    commands:
+      - echo "Packer によるビルドが完了しました。"

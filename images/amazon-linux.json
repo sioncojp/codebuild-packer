@@ -1,0 +1,60 @@
+{
+  "description": "AmazonLinux Base Image",
+
+  "variables": {
+    "AWS_REGION": "ap-northeast-1",
+
+    "AWS_ACCOUNT_AMAZONLINUX": "591542846629",
+    "AWS_ACCOUNT_XXXXXX": "xxxxxxxxxxx"
+  },
+
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "ami_name": "AmazonLinux-BaseImage x86_64 HVM SR-IOV with cloud-init - {{isotime \"20060102150405\"}}",
+      "ami_description": "Base AMI for AmazonLinux",
+      "region": "ap-northeast-1",
+      "ssh_username": "ec2-user",
+      "security_group_id": "sg-xxxxxxxxxx",
+      "subnet_id": "subnet-xxxxxxxxxx",
+      "iam_instance_profile": "packer-instance",
+      "instance_type": "c4.large",
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/xvda",
+          "volume_size": 30,
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        }
+      ],
+      "source_ami_filter": {
+        "filters": {
+          "name": "amzn2-ami-ecs-hvm-*",
+          "architecture": "x86_64",
+          "virtualization-type": "hvm",
+          "root-device-type": "ebs"
+        },
+        "owners": ["{{user `AWS_ACCOUNT_AMAZONLINUX`}}"],
+        "most_recent": true
+      },
+      "tags": {
+        "Name": "AmazonLinux-BaseImage",
+        "Timestamp": "{{isotime | clean_ami_name}}"
+      },
+      "ami_users": [
+        "{{user `AWS_ACCOUNT_XXXXXX`}}"
+      ]
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "sudo yum update -y"
+      ]
+    }
+  ],
+
+  "post-processors": []
+}
